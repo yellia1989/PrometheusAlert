@@ -63,21 +63,28 @@ func TimeFormat(timestr, format string) string {
 	}
 }
 
+var WEEKDAY = map[time.Weekday]string{
+    time.Sunday: "星期天",
+    time.Monday: "星期一",
+    time.Tuesday: "星期二",
+    time.Wednesday: "星期三",
+    time.Thursday: "星期四",
+    time.Friday: "星期五",
+    time.Saturday: "星期六",
+}
+
 //获取用户号码
 func GetUserPhone(neednum int) string {
 	//判断是否存在user.csv文件
 	Num := beego.AppConfig.String("defaultphone")
-	Today := time.Now()
-	//判断当前时间是否大于10点,大于10点取当天值班号码,小于10点取前一天值班号码
-	DayString := ""
-	if time.Now().Hour() >= 10 {
-		//取当天值班号码
-		DayString = Today.Format("2006年1月2日")
-	} else {
-		//取前一天值班号码
-		DayString = Today.AddDate(0, 0, -1).Format("2006年1月2日")
-	}
-	_, err := os.Stat("user.csv")
+    loc, err := time.LoadLocation("Asia/Shanghai")
+    if err != nil {
+		logs.Error(err.Error())
+        return Num
+    }
+	Today := time.Now().In(loc)
+	DayString := WEEKDAY[Today.Weekday()]
+	_, err = os.Stat("user.csv")
 	if err == nil {
 		f, err := os.Open("user.csv")
 		if err != nil {
@@ -95,7 +102,9 @@ func GetUserPhone(neednum int) string {
 			}
 			if strings.Contains(line, DayString) {
 				x := strings.Split(line, ",")
-				Num = x[neednum]
+                if neednum <= len(x) - 1 {
+				    Num = x[neednum]
+                }
 				break
 			}
 		}

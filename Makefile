@@ -55,3 +55,12 @@ docker-push:
 docker-test:
 	@echo ">> testing docker image and PrometheusAlert's health"
 	cmd/test_image.sh "$(DOCKER_IMAGE_NAME):$(TAG_VERSION)" 8080
+
+.PHONY: linux
+linux:
+	@echo ">> linux"
+	mkdir linux
+	cp -rf PrometheusAlert conf static views db logs user.csv linux
+	mv linux/conf/app-example.conf linux/conf/app.conf
+	tar czvf linux.tar.gz linux
+	rm -rf linux

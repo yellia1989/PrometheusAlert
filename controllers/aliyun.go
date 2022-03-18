@@ -27,13 +27,35 @@ func PostALYmessage(Messages, PhoneNumbers, logsign string) string {
 	request.PhoneNumbers = PhoneNumbers
 	request.SignName = SignName
 	request.TemplateCode = Template
-	request.TemplateParam = `{"code":"` + Messages + `"}`
+
+    params := make(map[string]string)
+    values := strings.Split(Messages, "&")
+    for _,v := range values {
+        values2 := strings.Split(v, "=")
+        if len(values2) == 2 {
+            params[values2[0]] = values2[1]
+        }
+    }
+    param := "{"
+    for k,v := range params {
+        k = strings.Trim(k, " ")
+        v = strings.Trim(v, " ")
+        if k == "" || v == "" {
+            continue
+        }
+        if param != "{" {
+            param += ","
+        }
+        param += `"`+ k +`":"`+ v +`"`
+    }
+    param += "}"
+	request.TemplateParam = param
 	response, err := client.SendSms(request)
 
 	if err != nil {
 		logs.Error(logsign, "[alymessage]", err.Error())
 	}
-	logs.Info(logsign, "[alymessage]", response)
+	logs.Info(logsign, "[alymessage]", response, ", message: " + request.TemplateParam)
 	model.AlertToCounter.WithLabelValues("alydx", Messages, PhoneNumbers).Add(1)
 	return response.Message
 }
